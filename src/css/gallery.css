@@ -95,9 +95,6 @@ ol {
     transform: rotate(360deg);
   }
 }
-.hidden {
-  display: none;
-}
 /* form */
 .form {
   display: flex;
@@ -139,4 +136,29 @@ ol {
 .form-btn:hover {
   background-color: #6c8cff;
   box-shadow: 3px 4px 8px rgba(0, 0, 0, 0.1);
+}
+.load-more-btn {
+  display: block;
+  cursor: pointer;
+  margin: 15px auto;
+  padding: 8px 16px;
+  min-height: 40px;
+  min-width: 91px;
+  border-radius: 8px;
+  color: #ffffff;
+  background-color: #4e75ff;
+  border: 0;
+  outline: none;
+  box-shadow: none;
+  transition:
+    background-color,
+    box-shadow 0.2s ease;
+}
+.load-more-btn:focus,
+.load-more-btn:hover {
+  background-color: #6c8cff;
+  box-shadow: 3px 4px 8px rgba(0, 0, 0, 0.1);
+}
+.hidden {
+  display: none;
 }

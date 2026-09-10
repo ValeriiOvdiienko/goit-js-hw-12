@@ -6,6 +6,7 @@ import {
   clearGallery,
   showLoader,
   hideLoader,
+  showLoadMoreButton,
 } from './js/render-functions.js';
 // імпорт ізітост + створюємо сповіщення
 import iziToast from 'izitoast';
@@ -25,45 +26,59 @@ function onError(message) {
 const form = document.querySelector('.form');
 const list = document.querySelector('.gallery');
 const loader = document.querySelector('.loader');
+const showMoreBtn = document.querySelector('.load-more-btn');
+let query = '';
+let page = 1;
 
 // створюємо івент і додаємо слухач подій
 form.addEventListener('submit', searchPicks);
-function searchPicks(event) {
+async function searchPicks(event) {
   // прибираємо дефолтну поведінку
   event.preventDefault();
   // отримуємо лінк на інпут і в змінну присвоюємо введені в нього дані
   let input = event.target.elements[0];
-  const query = input.value;
+  query = input.value;
   if (query.trim() === '') {
     const emptyStringError = `Yoyr search query is empty`;
     onError(emptyStringError);
     return;
   }
   // функція, яка робить ресет форми і очищає лист
-  clearGallery(list, form);
+  clearGallery(list);
   // до опрацювання промісу показуємо завантаження
   showLoader(loader);
   // викликаємо функцію, яка опрацьовує проміс за пошуковим запитом
-  getImagesByQuery(query)
-    .then(response => {
-      // додаємо перевірку чи масив із картинками не порожній
-      if (response.length === 0) {
-        const message = `Sorry, there are no images matching your search query. Please try again!`;
-        onError(message);
-        return null;
-      }
-      return response;
-    })
-    .then(data => {
-      hideLoader(loader);
-      if (!data) return;
-      //   тут будемо опрацьовувати масив і робити розмітку
-      createGallery(list, data);
-    })
-    .catch(error => {
-      onError(error.message);
-      hideLoader(loader);
-    });
+  try {
+    const response = await getImagesByQuery(query, page);
+    console.log(response);
+
+    // додаємо перевірку чи масив із картинками не порожній
+    if (response.length === 0) {
+      const message = `Sorry, there are no images matching your search query. Please try again!`;
+      onError(message);
+      return;
+    }
+    //   тут будемо опрацьовувати масив і робити розмітку
+    createGallery(list, response.data.hits);
+    showLoadMoreButton(showMoreBtn);
+  } catch (error) {
+    onError(error.message);
+  } finally {
+    hideLoader(loader);
+  }
+}
+showMoreBtn.addEventListener('click', loadMore);
+async function loadMore(event) {
+  page++;
+  try {
+    const response = await getImagesByQuery(query, page);
+    showLoader(loader);
+    createGallery(list, response);
+  } catch (error) {
+    onError(error.message);
+  } finally {
+    hideLoader(loader);
+  }
 }
 // // створюємо функцію, яка за допомогою аксіос робить запит на бекенд і повертає проміс
 // function getImagesByQuery(query) {
