@@ -28,7 +28,7 @@ export async function getImagesByQuery(query, currentPage = 1) {
         per_page: picsPerPage,
       },
     });
-    return response;
+    return response.data;
   } catch (error) {
     console.log(error.message);
     throw error;

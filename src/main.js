@@ -50,11 +50,12 @@ const list = document.querySelector('.gallery');
 const loader = document.querySelector('.loader');
 const showMoreBtn = document.querySelector('.load-more-btn');
 let query = '';
-let page = 1;
+let page = 0;
 const imagePerPage = 15;
 let imageTotal = 0;
 let totalPages = 0;
 Math.ceil(imageTotal / imagePerPage);
+const endGalleryMessage = `We're sorry, but you've reached the end of search results.`;
 
 // створюємо івент і додаємо слухач подій
 form.addEventListener('submit', searchPicks);
@@ -70,28 +71,30 @@ async function searchPicks(event) {
     return;
   }
   // функція, яка робить ресет форми і очищає лист
+  hideLoadMoreButton(showMoreBtn);
   clearGallery(list);
   // до опрацювання промісу показуємо завантаження
   showLoader(loader);
   // викликаємо функцію, яка опрацьовує проміс за пошуковим запитом
+  page = 1;
   try {
-    const response = await getImagesByQuery(query);
+    const response = await getImagesByQuery(query, page);
     console.log(response);
-    imageTotal = response.data.totalHits;
+    imageTotal = response.totalHits;
     totalPages = Math.ceil(imageTotal / imagePerPage);
 
     // додаємо перевірку чи масив із картинками не порожній
-    if (response.length === 0) {
+    if (response.totalHits.length === 0) {
       const message = `Sorry, there are no images matching your search query. Please try again!`;
       onError(message);
       return;
     }
     //   тут будемо опрацьовувати масив і робити розмітку
-    createGallery(list, response.data.hits);
+    createGallery(list, response.hits);
     event.target.reset();
     if (imageTotal > imagePerPage) {
       showLoadMoreButton(showMoreBtn);
-    }
+    } else endGallery(endGalleryMessage);
   } catch (error) {
     onError(error.message);
   } finally {
@@ -100,17 +103,16 @@ async function searchPicks(event) {
 }
 showMoreBtn.addEventListener('click', loadMore);
 async function loadMore(event) {
+  hideLoadMoreButton(showMoreBtn);
   page++;
-  if (page >= totalPages) {
-    const endGalleryMessage = `We're sorry, but you've reached the end of search results.`;
-    hideLoadMoreButton(showMoreBtn);
-    endGallery(endGalleryMessage);
-  }
+  if (page <= totalPages) {
+    showLoadMoreButton(showMoreBtn);
+  } else endGallery(endGalleryMessage);
   try {
     showLoader(loader);
-    scroll();
     const response = await getImagesByQuery(query, page);
-    createGallery(list, response.data.hits);
+    createGallery(list, response.hits);
+    scroll();
   } catch (error) {
     onError(error.message);
   } finally {
