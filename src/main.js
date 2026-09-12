@@ -84,7 +84,7 @@ async function searchPicks(event) {
     totalPages = Math.ceil(imageTotal / imagePerPage);
 
     // додаємо перевірку чи масив із картинками не порожній
-    if (response.totalHits.length === 0) {
+    if (response.hits.length === 0) {
       const message = `Sorry, there are no images matching your search query. Please try again!`;
       onError(message);
       return;
@@ -103,16 +103,25 @@ async function searchPicks(event) {
 }
 showMoreBtn.addEventListener('click', loadMore);
 async function loadMore(event) {
+  // 1. Приховуємо кнопку перед запитом
   hideLoadMoreButton(showMoreBtn);
-  page++;
-  if (page <= totalPages) {
-    showLoadMoreButton(showMoreBtn);
-  } else endGallery(endGalleryMessage);
+  showLoader(loader);
+
+  page += 1;
+
   try {
-    showLoader(loader);
     const response = await getImagesByQuery(query, page);
+
+    // 2. Спочатку рендеримо отримані зображення та робимо скрол
     createGallery(list, response.hits);
     scroll();
+
+    // 3. Лише ПІСЛЯ рендеру перевіряємо, чи є ще сторінки
+    if (page < totalPages) {
+      showLoadMoreButton(showMoreBtn);
+    } else {
+      endGallery(endGalleryMessage);
+    }
   } catch (error) {
     onError(error.message);
   } finally {
