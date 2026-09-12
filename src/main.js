@@ -7,6 +7,7 @@ import {
   showLoader,
   hideLoader,
   showLoadMoreButton,
+  hideLoadMoreButton,
 } from './js/render-functions.js';
 // імпорт ізітост + створюємо сповіщення
 import iziToast from 'izitoast';
@@ -21,6 +22,27 @@ function onError(message) {
     backgroundColor: '#992a2a',
   });
 }
+function endGallery(message) {
+  iziToast.info({
+    position: 'topRight',
+    timeout: 5000,
+    message: message,
+    icon: false,
+    messageColor: '#ffffff',
+    backgroundColor: '#4e75ff',
+  });
+}
+function scroll() {
+  const card = document.querySelector('.gallery-item');
+  if (card) {
+    const { height } = card.getBoundingClientRect();
+    const scrollHeight = height * 2;
+    window.scrollBy({
+      top: scrollHeight,
+      behavior: 'smooth',
+    });
+  }
+}
 
 // отримуємо форму, лофдук і список в ДОМ
 const form = document.querySelector('.form');
@@ -29,6 +51,10 @@ const loader = document.querySelector('.loader');
 const showMoreBtn = document.querySelector('.load-more-btn');
 let query = '';
 let page = 1;
+const imagePerPage = 15;
+let imageTotal = 0;
+let totalPages = 0;
+Math.ceil(imageTotal / imagePerPage);
 
 // створюємо івент і додаємо слухач подій
 form.addEventListener('submit', searchPicks);
@@ -49,8 +75,10 @@ async function searchPicks(event) {
   showLoader(loader);
   // викликаємо функцію, яка опрацьовує проміс за пошуковим запитом
   try {
-    const response = await getImagesByQuery(query, page);
+    const response = await getImagesByQuery(query);
     console.log(response);
+    imageTotal = response.data.totalHits;
+    totalPages = Math.ceil(imageTotal / imagePerPage);
 
     // додаємо перевірку чи масив із картинками не порожній
     if (response.length === 0) {
@@ -60,7 +88,10 @@ async function searchPicks(event) {
     }
     //   тут будемо опрацьовувати масив і робити розмітку
     createGallery(list, response.data.hits);
-    showLoadMoreButton(showMoreBtn);
+    event.target.reset();
+    if (imageTotal > imagePerPage) {
+      showLoadMoreButton(showMoreBtn);
+    }
   } catch (error) {
     onError(error.message);
   } finally {
@@ -70,10 +101,16 @@ async function searchPicks(event) {
 showMoreBtn.addEventListener('click', loadMore);
 async function loadMore(event) {
   page++;
+  if (page >= totalPages) {
+    const endGalleryMessage = `We're sorry, but you've reached the end of search results.`;
+    hideLoadMoreButton(showMoreBtn);
+    endGallery(endGalleryMessage);
+  }
   try {
-    const response = await getImagesByQuery(query, page);
     showLoader(loader);
-    createGallery(list, response);
+    scroll();
+    const response = await getImagesByQuery(query, page);
+    createGallery(list, response.data.hits);
   } catch (error) {
     onError(error.message);
   } finally {

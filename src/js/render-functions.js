@@ -59,3 +59,6 @@ export function hideLoader(loader) {
 export function showLoadMoreButton(btn) {
   btn.classList.remove('hidden');
 }
+export function hideLoadMoreButton(btn) {
+  btn.classList.add('hidden');
+}
